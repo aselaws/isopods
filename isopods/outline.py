@@ -8,6 +8,7 @@ import geojson  # for preparing polygons for saving to file
 from .convert import convert_grid_values
 from .grid import transform_coords_to_grid
 
+
 # --- Functions ---
 def convert_grid_to_polys(arr: np.array) -> dict:
     """
@@ -16,7 +17,7 @@ def convert_grid_to_polys(arr: np.array) -> dict:
     and another for the island of Lundy. Both will have the same value
     (belong to the same region). Take care to retain both entries.
     """
-    
+
     # rasterio shape conversion needs float32 or int32 dtype.
     try:
         arr_float32 = arr.astype(np.float32)
@@ -36,7 +37,7 @@ def convert_grid_to_polys(arr: np.array) -> dict:
 
     shapes_generator = _make_shapes_from_arr(arr_float32)
     dict_polys = _convert_shapes_to_poly_dict(shapes_generator)
-    
+
     if converted_vals:
         # Convert floats back to original labels.
         dict_polys = dict([(val, dict_polys[f_val])
@@ -54,7 +55,7 @@ def _make_shapes_from_arr(arr: np.array) -> Generator:
     # shape.
     shapes = rasterio.features.shapes(np.float32(arr))
     return shapes
-    
+
 
 def _convert_shapes_to_poly_dict(shapes_generator: Generator) -> dict:
     """
@@ -62,15 +63,15 @@ def _convert_shapes_to_poly_dict(shapes_generator: Generator) -> dict:
     # Convert generator to list so we can access it more than once:
     shapes = [s for s in shapes_generator]
     # Labels of regions present here:
-    region_vals, val_counts = np.unique([s[1] for s in shapes],
-                                         return_counts=True)
+    region_vals, val_counts = np.unique(
+        [s[1] for s in shapes], return_counts=True)
     # Set up a dictionary. Each region has an empty array the length of
     # the number of shapes that belong to it.
     dict_shapes = dict([(r, np.empty(n, dtype=object)) for r, n in
                         zip(region_vals, val_counts)])
     fill_counts = dict([(r, 0) for r in region_vals])
 
-    # Fill the dictionary with polygons, grouping by region.   
+    # Fill the dictionary with polygons, grouping by region.
     # shapes can have multiple entries for one region
     # when the region consists of multiple non-adjacent shapes,
     # so place multiple polys for same region in the list.
@@ -92,8 +93,8 @@ def _convert_shapes_to_poly_dict(shapes_generator: Generator) -> dict:
 
 
 def _make_poly_from_coords_lists(
-        coord_lists: list|tuple,
-        offset: float|int = 0.5
+        coord_lists: list | tuple,
+        offset: float | int = 0.5
         ) -> shapely.geometry.Polygon:
     """
     Offset should be 0.5 when coords are in pixel units.
@@ -123,8 +124,8 @@ def _make_poly_from_coords_lists(
 
 
 def _convert_poly_list_to_poly(
-        p_list: list|tuple
-        ) -> shapely.geometry.Polygon|shapely.geometry.MultiPolygon:
+        p_list: list | tuple
+        ) -> shapely.geometry.Polygon | shapely.geometry.MultiPolygon:
     """
     """
     if len(p_list) > 1:
@@ -176,7 +177,7 @@ def update_poly_coords(
 
     TO DO - remove transform_dict from all this  ------------------------------------
 
-    
+
     shapely v2.1.0 (April 2025) has a new interleaved kwarg in shapely.transform()
     which would allow for coordinate transformation,
     but using another method here to allow for older versions.
@@ -260,7 +261,7 @@ def convert_multipoly_to_coords(
 
 def convert_dict_polys_to_coords(
         dict_polys: dict[any, shapely.Geometry]
-    ) -> dict[any, np.array]:
+        ) -> dict[any, np.array]:
     """Wrapper for convert_poly_to_coords().
     """
     dict_coords = {}

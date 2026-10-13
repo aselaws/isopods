@@ -4,17 +4,18 @@
 import numpy as np
 import pandas as pd
 
+
 # --- Functions ---
 def convert_df_to_2darray(
         df: pd.DataFrame,
         data_col: str,
         # transform_dict: dict,                        # CHANGE THIS to input rows and cols directly
         *,
-        n_rows: float|int,
-        n_cols: float|int,
+        n_rows: float | int,
+        n_cols: float | int,
         empty_value: any = None,
         **kwargs
-    ) -> np.ma.masked_array:
+        ) -> np.ma.masked_array:
     """
     Default value for empty cells depends on data type.
     """
@@ -44,10 +45,10 @@ def convert_df_to_2darray(
 
 
 def convert_grid_values(
-        arr_old: np.array|np.ma.masked_array,
+        arr_old: np.array | np.ma.masked_array,
         dict_values: dict,
         empty_value: any = None
-        ) -> np.array|np.ma.masked_array:
+        ) -> np.array | np.ma.masked_array:
     """
     TO DO - check if these look like colours. Check data types of
     incoming dict values.
@@ -62,7 +63,7 @@ def convert_grid_values(
     values_are_colours = any(
         [np.issubdtype(value_type, t) for t in listlike])
     value_example = list(dict_values.values())[0]
-    
+
     if values_are_colours:
         _check_colours_valid(list(dict_values.values()))
         arr_shape = (*arr_old.shape, len(value_example))
@@ -102,7 +103,7 @@ def convert_grid_values(
     return arr_new
 
 
-def _check_incoming_dtype(values: list|tuple):
+def _check_incoming_dtype(values: list | tuple):
     """Check that all values have same/similar dtype(s)."""
     types_here = list(set([type(v) for v in values]))
     if len(types_here) == 1:
@@ -121,7 +122,7 @@ def _check_incoming_dtype(values: list|tuple):
                              f'Found {types_here}.'))
 
 
-def _get_incoming_dtype(values: list|tuple):  # -> dtype:
+def _get_incoming_dtype(values: list | tuple):  # -> dtype:
     """
     """
     types_here = list(set([type(v) for v in values]))
@@ -153,7 +154,7 @@ def _get_incoming_dtype(values: list|tuple):  # -> dtype:
     return d
 
 
-def _generate_empty_value(d):#: dtype) -> any:
+def _generate_empty_value(d: dtype) -> any:
     """
     For colours, use _generate_empty_colour.
     """
@@ -170,7 +171,7 @@ def _generate_empty_value(d):#: dtype) -> any:
     return empty_value
 
 
-def _generate_empty_colour(colour_example: list|tuple) -> list|tuple:
+def _generate_empty_colour(colour_example: list | tuple) -> list | tuple:
     """
     """
     # Define colour for empty cells in same format as dict_colours.
@@ -183,9 +184,9 @@ def _generate_empty_colour(colour_example: list|tuple) -> list|tuple:
     else:
         colour_empty = (v, v, v)  # RGB white
     return colour_empty
-    
 
-def _check_colours_valid(colours: list|tuple):
+
+def _check_colours_valid(colours: list | tuple):
     """
     """
     all_c_len = []
@@ -215,7 +216,7 @@ def calculate_scaled_cell_values(
         col_label_props: str = 'label_props',
         col_area_props: str = 'area_props',
         r: int = 3
-    ) -> pd.DataFrame:
+        ) -> pd.DataFrame:
     """
     Expect index to be cell label.
 
@@ -253,7 +254,7 @@ def pick_midpoint(arr: np.array, label: any) -> tuple[int, int]:
 
 
 def pick_midpoints_for_regions(
-        arr: np.ndarray, labels_unique: list|tuple
+        arr: np.ndarray, labels_unique: list | tuple
         ):
     """Wrapper for pick_midpoint().
     """

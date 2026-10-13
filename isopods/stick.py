@@ -7,24 +7,25 @@ import pandas as pd
 import geopandas as gpd
 from .grid import set_up_cell_limits
 
+
 # --- Functions ---
 def stick_shapes_to_grid(
         gdf: gpd.GeoDataFrame,
         # td: dict,                              # to do - update this in notebooks
         *,
-        cell_width: float|int,
-        cell_height: float|int,
-        n_cols: float|int,
-        n_rows: float|int,
-        xmin: float|int,
-        ymin: float|int,
+        cell_width: float | int,
+        cell_height: float | int,
+        n_cols: float | int,
+        n_rows: float | int,
+        xmin: float | int,
+        ymin: float | int,
         print_progress: bool = True,
         _test_grid_layout: bool = False,
         **kwargs
         ) -> pd.DataFrame:
     """
     Assign shapes to grid cells.
-    
+
     Set up grid. Bounds of each cell.
 
     td is transform_dict.
@@ -33,8 +34,8 @@ def stick_shapes_to_grid(
 
     TO DO - make it clear whether col and row are starting in top
     left or wherever.
-    """    
-    
+    """
+
     cell_area = cell_width * cell_height
     cell_props = []
     cell_label = 0
@@ -58,7 +59,7 @@ def stick_shapes_to_grid(
                     col, row, xmin, ymin, cell_width, cell_height
                     )
                 gdf_here = gpd.clip(gdf, bbox)
-    
+
                 if len(gdf_here) > 0:
                     # Sanity check - are there intersecting shapes?
                     pairs = find_overlapping_polygons(gdf_here)
@@ -67,7 +68,7 @@ def stick_shapes_to_grid(
                         warn_overlap_here = 1
                     else:
                         warn_overlap_here = 0
-                    
+
                     prop_cell_covered = round(gdf_here.area.sum() / cell_area, 3)
                     series_area_props = find_area_props(gdf_here).round(3)
                     # If this index is returned as a pandas StringArray
@@ -124,7 +125,7 @@ def find_overlapping_polygons(gdf: gpd.GeoDataFrame) -> np.array:
     gdf_overlap = gpd.sjoin(gdf, gdf, predicate='overlaps').reset_index()
     mask = gdf_overlap[f'{c}_left'] != gdf_overlap[f'{c}_right']
     gdf_overlap = gdf_overlap[mask]
-    
+
     pairs = gdf_overlap[[f'{c}_left', f'{c}_right']].values
     # Remove duplicates in different orders:
     pairs = np.unique(np.sort(pairs))

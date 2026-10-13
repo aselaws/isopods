@@ -3,12 +3,13 @@
 # --- Imports ---
 import numpy as np
 
+
 # --- Functions ---
 def make_grid_bounds_containing_bbox(
-        bbox_shapes: list|tuple,
-        cell_width: float|int,
-        cell_height: float|int
-    ) -> list[float|int]:
+        bbox_shapes: list | tuple,
+        cell_width: float | int,
+        cell_height: float | int
+        ) -> list[float | int]:
     """
     """
     xmin, ymin, xmax, ymax = bbox_shapes
@@ -22,13 +23,12 @@ def make_grid_bounds_containing_bbox(
 
 
 def make_transform_dict(
-        bbox: Union[list[float|int],
-                    tuple[float|int, ...]],
-        cell_width: float|int,
-        cell_height: float|int,
+        bbox: list[float | int] | tuple[float | int, ...],
+        cell_width: float | int,
+        cell_height: float | int,
         crs_name: str = '',
         crs_epsg: str = ''
-    ) -> dict:
+        ) -> dict:
     """
     bbox - left, bottom, right, top
 
@@ -40,7 +40,7 @@ def make_transform_dict(
     xmin, ymin, xmax, ymax = bbox
     n_cols = int(np.ceil((xmax - xmin) // cell_width))
     n_rows = int(np.ceil((ymax - ymin) // cell_height))
-    
+
     # Store the parameters for scaling the raster image
     # to match the original vector image:
     transform_dict = {
@@ -71,14 +71,14 @@ def make_transform_dict(
 def set_up_cell_limits(
         col: int,
         row: int,
-        xmin: float|int,
-        ymin: float|int,
-        cell_width: float|int,
-        cell_height: float|int
-    ) -> tuple[float|int, ...]:
+        xmin: float | int,
+        ymin: float | int,
+        cell_width: float | int,
+        cell_height: float | int
+        ) -> tuple[float | int, ...]:
     """Set up scaled bounds of this cell (row, col).
 
-    
+
     """
     # Usual bbox is xmin, ymin, xmax, ymax:
     bbox = (
@@ -93,15 +93,15 @@ def set_up_cell_limits(
 def transform_coords_to_grid(
         coords: np.array,
         *,
-        cell_width: float|int,
-        cell_height: float|int,
-        n_rows: float|int,
-        xmin: float|int,
-        ymax: float|int,
+        cell_width: float | int,
+        cell_height: float | int,
+        n_rows: float | int,
+        xmin: float | int,
+        ymax: float | int,
         **kwargs
-    ) -> np.array:
+        ) -> np.array:
     """Change pixel coordinates to match grid.
-    
+
     d is transform_dict."""
     # Current coordinates:
     x = coords[:, 0]
@@ -115,9 +115,9 @@ def transform_coords_to_grid(
 
 
 def calculate_cell_centres(
-        zmin: float|int,
-        zmax: float|int,
-        cell_size: float|int
-    ) -> np.array:
+        zmin: float | int,
+        zmax: float | int,
+        cell_size: float | int
+        ) -> np.array:
     z = np.arange(zmin, zmax, cell_size) + 0.5 * cell_size
     return z
