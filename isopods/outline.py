@@ -12,7 +12,7 @@ from .grid import transform_coords_to_grid
 # --- Functions ---
 def convert_grid_to_polys(arr: np.array) -> dict:
     """Make dict of polygons of discrete regions in grid geometry.
-    
+
     The rasterio shape conversion needs the region labels to have
     float32 or int32 dtype. If this isn't the case in the input arr,
     then the labels are temporarily switched to arbitrary float32.
@@ -67,7 +67,7 @@ def _make_shapes_from_arr(arr: np.array, **kwargs) -> Generator:
 
     Returns
     -------
-    shapes - Generator.    
+    shapes - Generator.
     """
     # Convert the array into shapes. Adjacent areas of the array with the
     # same value (e.g. belong to same region) will be gathered as one
@@ -136,7 +136,7 @@ def _make_poly_from_coords_lists(
         offset: float | int = 0.5
         ) -> shapely.geometry.Polygon:
     """Make Polygon from lists of exterior and interior coordinates.
-    
+
     Inputs
     ------
     coord_lists - list | tuple. Sets of coordinates for one polygon.
@@ -190,7 +190,7 @@ def _convert_poly_list_to_poly(
     Returns
     -------
     p - shapely.geometry.Polygon | shapely.geometry.MultiPolygon.
-        A single geometry from the input polygon(s).    
+        A single geometry from the input polygon(s).
     """
     if len(p_list) > 1:
         # Combine list of polygons into MultiPolygon.
@@ -349,7 +349,7 @@ def transform_poly_dict_coords(
     """
     dict_polys_new = {}
     for label, p in dict_polys.items():
-        if type(p) == shapely.geometry.multipolygon.MultiPolygon:
+        if isinstance(p, shapely.geometry.multipolygon.MultiPolygon):
             new_mp_list = np.empty(len(p.geoms), dtype=object)
             for i, poly in enumerate(p.geoms):
                 poly = update_poly_coords(
@@ -358,7 +358,7 @@ def transform_poly_dict_coords(
                 )
                 new_mp_list[i] = poly
             new_p = shapely.geometry.MultiPolygon(list(new_mp_list))
-        elif type(p) == shapely.geometry.polygon.Polygon:
+        elif isinstance(p, shapely.geometry.polygon.Polygon):
             new_p = update_poly_coords(
                 p, cell_width=cell_width, cell_height=cell_height,
                 n_rows=n_rows, xmin=xmin, ymax=ymax
@@ -372,7 +372,7 @@ def transform_poly_dict_coords(
 
 def convert_poly_to_coords(p: shapely.geometry.Polygon) -> np.array:
     """Flatten Polygon exterior and hole coords for plotly.
-    
+
     Inputs
     ------
     p - shapely.geometry.Polygon.
@@ -407,9 +407,9 @@ def convert_multipoly_to_coords(
         mp: shapely.geometry.MultiPolygon
         ) -> np.array:
     """Flatten MultiPolygon exterior and hole coords for plotly.
-    
+
     Wrapper for convert_poly_to_coords().
-    
+
     Inputs
     ------
     mp - shapely.geometry.MultiPolygon.
