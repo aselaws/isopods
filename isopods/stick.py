@@ -1,4 +1,11 @@
-"""
+"""Assign shapes to grid cells and calculate the cell area covered.
+
+TO DO - consider changing main stick function so that cell bounds
+are calculated in advance rather than during the loop.
+More potential in the future for non-rectangular cells or not
+calculating all cells in the grid if some are known to be empty.
+Would also need to store cell area rather than proportion as
+cell area could vary.
 """
 # --- Imports ---
 import warnings
@@ -11,7 +18,6 @@ from .grid import set_up_cell_limits
 # --- Functions ---
 def stick_shapes_to_grid(
         gdf: gpd.GeoDataFrame,
-        # td: dict,                              # to do - update this in notebooks
         *,
         cell_width: float | int,
         cell_height: float | int,
@@ -23,30 +29,54 @@ def stick_shapes_to_grid(
         _test_grid_layout: bool = False,
         **kwargs
         ) -> pd.DataFrame:
-    """
-    Assign shapes to grid cells.
+    """Record which shapes are in each grid cell.
 
-    Set up grid. Bounds of each cell.
+    For each cell in turn, clip the input geometry to the cell bounds.
+    Record the shapes in the clipped area and the area that each
+    covers.
 
-    td is transform_dict.
+    Resulting dataframe only stores data for non-empty cells.
 
-    df_props only stores data for non-empty cells.
+    **kwargs allows for calling the function with a dictionary
+    that contains unnecessary keys,
+    e.g. transform_coords_to_grid(coords, **transform_dict).
+    The *identifer makes sure that cell properties are passed
+    as keywords and so their order doesn't matter.
 
     TO DO - make it clear whether col and row are starting in top
     left or wherever.
+    TO DO - define cells in advance?
+
+    Inputs
+    ------
+    gdf               - gpd.GeoDataFrame. Contains shapes to be stuck
+                        to the grid.
+    cell_width        - float | int. Width of cells for this grid.
+    cell_height       - float | int. Height of cells for this grid.
+    n_cols            - float | int. Number of columns in the grid.
+    n_rows            - float | int. Number of rows in the grid.
+    xmin              - float | int. x bound of the grid.
+    ymin              - float | int. y bound of the grid.
+    print_progress    - bool. Optional. Print how many cells so far
+                        have been checked.
+    _test_grid_layout - bool. Optional. Don't use shapes, just assign
+                        row and column to each cell.
+
+    Returns
+    -------
+    df_props - pd.DataFrame. Contains a row for each cell that contains
+               any shape. Columns record cell location (row, column),
+               contents (shapes, proportions of filled area taken up
+               by each shape), proportion of filled area.
     """
 
     cell_area = cell_width * cell_height
     cell_props = []
     cell_label = 0
-    raise_overlap_warning = False
     for col in range(n_cols):
         for row in range(n_rows):
             if print_progress:
-                perc_done = (
-                    100.0 * (cell_label + 1) /
-                    (n_rows * n_cols)
-                )
+                perc_done = 100.0 * (cell_label + 1) / (n_rows * n_cols)
                 print(f'{perc_done:5.1f}% of cells checked', end='\r')
             else:
                 pass
@@ -63,13 +93,10 @@ def stick_shapes_to_grid(
                 if len(gdf_here) > 0:
                     # Sanity check - are there intersecting shapes?
                     pairs = find_overlapping_polygons(gdf_here)
-                    if len(pairs) > 0:
-                        raise_overlap_warning = True
-                        warn_overlap_here = 1
-                    else:
-                        warn_overlap_here = 0
+                    warn_overlap_here = 1 if len(pairs) > 0 else 0
 
-                    prop_cell_covered = round(gdf_here.area.sum() / cell_area, 3)
+                    prop_cell_covered = round(
+                        gdf_here.area.sum() / cell_area, 3)
                     series_area_props = find_area_props(gdf_here).round(3)
                     # If this index is returned as a pandas StringArray
                     # (experimental feature at time of writing)
@@ -79,7 +106,8 @@ def stick_shapes_to_grid(
                         r = r.to_numpy().tolist()
                     except AttributeError:
                         pass
-                    # Majority assumes that series is sorted by descending prop.
+                    # Majority assumes that series is sorted by
+                    # descending prop.
                     cell_props.append((
                         cell_label,
                         row,
@@ -103,8 +131,8 @@ def stick_shapes_to_grid(
                 'label_majority', 'overlapping_polys')
     df_props = pd.DataFrame(cell_props, columns=cols).set_index('cell_label')
 
-    if raise_overlap_warning:
-        n_overlapping = df_props['overlapping_polys'].sum()
+    n_overlapping = df_props['overlapping_polys'].sum()
+    if n_overlapping > 0:
         warnings.warn((
             'Overlapping polygons present '
             f'in {n_overlapping:.0f} cells: '
@@ -116,7 +144,24 @@ def stick_shapes_to_grid(
 
 
 def find_overlapping_polygons(gdf: gpd.GeoDataFrame) -> np.array:
-    """
+    """Find pairs of shapes here that overlap.
+
+    Use this to check whether any shapes overlap and so whether to
+    check results about the areas of the cell covered by the shapes.
+    For example, the total area covered could be much greater than
+    the area of the cell if lots of regions are double-counted.
+
+    Assumes that shape labels are in the gdf index.
+
+    Inputs
+    ------
+    gdf - gpd.GeoDataFrame. Contains shapes that share an area.
+          Index is the labels for the shapes.
+
+    Returns
+    -------
+    pairs - np.array. Each element is a list of the names of a pair
+            of shapes that overlap.
     """
     # predicate='overlaps' means if two shapes touch boundaries,
     # then it doesn't count as overlapping. They are only flagged
@@ -133,12 +178,25 @@ def find_overlapping_polygons(gdf: gpd.GeoDataFrame) -> np.array:
 
 
 def find_area_props(gdf: gpd.GeoDataFrame) -> pd.Series:
-    """
+    """Calculate proportion of this gdf covered by each shape.
 
-    Results sorted by decreasing proportion.
+    Note that these are proportions of the total shape area in gdf,
+    not the total area covered by the bounding box of the gdf.
+    Empty space within the bounding box and not covered by a shape
+    is not included in these calculations.
 
-    Proportion of the total shape area in gdf_here,
-    not its bounding box for example. Empty space ignored.
+    Results are sorted by decreasing proportion.
+
+    Inputs
+    ------
+    gdf - gpd.GeoDataFrame. Contains shapes that share an area.
+          Index is the labels for the shapes.
+
+    Returns
+    -------
+    s_area_props - pd.Series. One row for each shape in the gdf.
+                   Values are the proportion of the total covered
+                   area that each shape covers.
     """
     # Find proportion of the constituent LSOAs by area:
     s_area_props = gdf.area / gdf.area.sum()
